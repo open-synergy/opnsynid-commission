@@ -19,6 +19,7 @@
     ],
     "data": [
         "security/ir.model.access.csv",
+        "commission_menu.xml",
         "views/commission_type_views.xml",
         "views/commission_commission_views.xml",
     ],
