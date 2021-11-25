@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2021 OpenSynergy Indonesia
+     Copyright 2021 PT. Simetri Sinergi Indonesia
+     License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <record id="commission_type_view_tree" model="ir.ui.view">
+        <field name="name">commission.type.tree</field>
+        <field name="model">commission.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="code" />
+                <field name="name" />
+                <field name="active" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="commission_type_view_form" model="ir.ui.view">
+        <field name="name">commission.type.form</field>
+        <field name="model">commission.type</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                </header>
+                <sheet>
+                <group>
+                    <group name="left">
+                        <field name="name" />
+                        <field name="code" />
+                        <field name="description" />
+                    </group>
+                    <group name="right">
+                        <field name="active" />
+                        <field name="commission_computation_python_code" />
+                    </group>
+                </group>
+                <notebook colspan="4">
+                    <page name="page_note" string="Tax">
+                        <field name="tax_ids" nolabel="1" />
+                    </page>
+                    <page name="page_account" string="Account Move">
+                        <group>
+                            <group>
+                                <field name="account_move_line_evaluation_method" />
+                                <field name="account_move_line_evaluation_domain" />
+                            </group>
+                            <group>
+                                <field
+                                        name="account_move_line_evaluation_python_code"
+                                    />
+                            </group>
+                        </group>
+                    </page>
+                    <page name="page_other" string="Other Info">
+                        <group>
+                            <group>
+                                <field
+                                        name="allowed_payable_account_ids"
+                                        widget="many2many_tags"
+                                    />
+                                <field
+                                        name="default_payable_account_id"
+                                        domain="[('id', 'in', allowed_payable_account_ids)]"
+                                    />
+                            </group>
+                            <group>
+                                <field name="allowed_payable_journal_ids" />
+                                <field
+                                        name="payable_journal_id"
+                                        domain="[('id', 'in', allowed_payable_journal_ids)]"
+                                    />
+                            </group>
+                        </group>
+                    </page>
+                </notebook>
+            </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="commission_type_action" model="ir.actions.act_window">
+        <field name="name">Commission Type</field>
+        <field name="res_model">commission.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="commission_type_menu"
+        parent="menu_commission_master"
+        action="commission_type_action"
+        sequence="1"
+    />
+</odoo>
