@@ -7,6 +7,7 @@ from odoo import api, fields, models
 
 class CommissionCommission(models.Model):
     _name = "commission.commission"
+    _description = "Commission"
     _inherit = [
         "mixin.sequence",
         "mail.thread",
@@ -27,7 +28,7 @@ class CommissionCommission(models.Model):
         index=True,
         required=True,
         readonly=True,
-        state={"draft": [("readonly", False)]},
+        states={"draft": [("readonly", False)]},
         copy=False,
         default=fields.Date.context_today,
     )
@@ -35,13 +36,13 @@ class CommissionCommission(models.Model):
         string="Start Date",
         required=True,
         readonly=True,
-        state={"draft": [("readonly", False)]},
+        states={"draft": [("readonly", False)]},
     )
     date_end = fields.Date(
         string="End Date",
         required=True,
         readonly=True,
-        state={"draft": [("readonly", False)]},
+        states={"draft": [("readonly", False)]},
     )
     type_id = fields.Many2one(
         string="Type",
@@ -151,14 +152,6 @@ class CommissionCommission(models.Model):
         string="Can Restart",
         compute="_compute_policy",
     )
-    # print_ok = fields.Boolean(
-    #     string="Can Print",
-    #     compute="_compute_policy",
-    # )
-    # smart_ok = fields.Boolean(
-    #     string="Can Open Smart Button",
-    #     compute="_compute_policy",
-    # )
 
     # Log Fields
     confirm_date = fields.Datetime(
@@ -223,10 +216,12 @@ class CommissionCommission(models.Model):
     @api.multi
     def _prepare_open_data(self):
         self.ensure_one()
+        move = self._create_accounting_entry()
         return {
             "state": "open",
             "open_date": fields.Datetime.now(),
             "open_user_id": self.env.user.id,
+            "account_move_id": move.id,
         }
 
     @api.multi
@@ -302,7 +297,7 @@ class CommissionCommission(models.Model):
         "type_id",
     )
     def onchange_policy_template_id(self):
-        template_id = self._get_template_id()
+        template_id = self._get_template_policy()
         for document in self:
             document.policy_template_id = template_id
 
@@ -323,7 +318,7 @@ class CommissionCommission(models.Model):
                 amount_before_tax += line.amount_before_tax
                 amount_after_tax += line.amount_after_tax
 
-            amount_tax = amount_before_tax - amount_after_tax
+            amount_tax = amount_after_tax - amount_before_tax
             commission.amount_before_tax = amount_before_tax
             commission.amount_after_tax = amount_after_tax
             commission.amount_tax = amount_tax

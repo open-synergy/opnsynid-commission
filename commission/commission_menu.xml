@@ -4,13 +4,7 @@
      License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <odoo>
 
-    <menuitem
-        id="menu_root_commission"
-        name="Commission"
-        parent="account.menu_finance"
-        sequence="5"
-    />
-        <!--Commission sub-menus-->
+    <menuitem id="menu_root_commission" name="Commission" sequence="5" />
         <menuitem
         id="menu_commission_documents"
         name="Commission"
