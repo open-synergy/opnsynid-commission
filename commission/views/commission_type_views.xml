@@ -10,7 +10,6 @@
             <tree>
                 <field name="code" />
                 <field name="name" />
-                <field name="active" />
             </tree>
         </field>
     </record>
@@ -23,53 +22,43 @@
                 <header>
                 </header>
                 <sheet>
-                <group>
-                    <group name="left">
-                        <field name="name" />
-                        <field name="code" />
-                        <field name="description" />
-                    </group>
-                    <group name="right">
-                        <field name="active" />
-                        <field name="commission_computation_python_code" />
-                    </group>
+                <group name="header" colspan="4" col="2">
+                    <field name="name" />
+                    <field name="code" />
+                    <field name="active" />
+                    <field name="commission_computation_python_code" />
                 </group>
                 <notebook colspan="4">
-                    <page name="page_note" string="Tax">
-                        <field name="tax_ids" nolabel="1" />
+                    <page name="description" string="Description">
+                        <field name="description" />
+
                     </page>
-                    <page name="page_account" string="Account Move">
-                        <group>
-                            <group>
-                                <field name="account_move_line_evaluation_method" />
-                                <field name="account_move_line_evaluation_domain" />
-                            </group>
-                            <group>
-                                <field
-                                        name="account_move_line_evaluation_python_code"
-                                    />
-                            </group>
+                    <page name="accounting" string="Accounting Setting">
+                        <group name="accounting_1" colspan="4" col="2">
+                          <field
+                                    name="allowed_payable_account_ids"
+                                    widget="many2many_tags"
+                                />
+                          <field
+                                    name="default_payable_account_id"
+                                    domain="[('id', 'in', allowed_payable_account_ids)]"
+                                />
+                          <field
+                                    name="allowed_payable_journal_ids"
+                                    widget="many2many_tags"
+                                />
+                          <field
+                                    name="payable_journal_id"
+                                    domain="[('id', 'in', allowed_payable_journal_ids)]"
+                                />
+                          <field name="tax_ids" widget="many2many_tags" />
                         </group>
                     </page>
-                    <page name="page_other" string="Other Info">
-                        <group>
-                            <group>
-                                <field
-                                        name="allowed_payable_account_ids"
-                                        widget="many2many_tags"
-                                    />
-                                <field
-                                        name="default_payable_account_id"
-                                        domain="[('id', 'in', allowed_payable_account_ids)]"
-                                    />
-                            </group>
-                            <group>
-                                <field name="allowed_payable_journal_ids" />
-                                <field
-                                        name="payable_journal_id"
-                                        domain="[('id', 'in', allowed_payable_journal_ids)]"
-                                    />
-                            </group>
+                    <page name="acc_entry" string="Accounting Entry Evaluation">
+                        <group name="acc_entry" colspan="4" col="2">
+                            <field name="account_move_line_evaluation_method" />
+                            <field name="account_move_line_evaluation_domain" />
+                            <field name="account_move_line_evaluation_python_code" />
                         </group>
                     </page>
                 </notebook>
