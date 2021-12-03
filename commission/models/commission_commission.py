@@ -2,7 +2,8 @@
 # Copyright 2021 OpenSynergy Indonesia
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 
 class CommissionCommission(models.Model):
@@ -80,6 +81,22 @@ class CommissionCommission(models.Model):
         comodel_name="account.account",
         compute="_compute_allowed_payable_account_ids",
     )
+
+    @api.multi
+    @api.depends(
+        "type_id",
+    )
+    def _compute_allowed_payable_account_ids(self):
+        obj_allowed = self.env["commission.type"]
+        for comm_type in self:
+            criteria = [
+                ("id", "=", comm_type.type_id.id),
+            ]
+            account_ids = obj_allowed.search(criteria).mapped(
+                lambda r: r.allowed_payable_account_ids
+            )
+            comm_type.allowed_payable_account_ids = account_ids
+
     payable_account_id = fields.Many2one(
         string="Account Payable",
         required=True,
@@ -91,6 +108,22 @@ class CommissionCommission(models.Model):
         comodel_name="account.journal",
         compute="_compute_allowed_journal_ids",
     )
+
+    @api.multi
+    @api.depends(
+        "type_id",
+    )
+    def _compute_allowed_journal_ids(self):
+        obj_allowed = self.env["commission.type"]
+        for comm_type in self:
+            criteria = [
+                ("id", "=", comm_type.type_id.id),
+            ]
+            journal_ids = obj_allowed.search(criteria).mapped(
+                lambda r: r.allowed_payable_journal_ids
+            )
+            comm_type.allowed_journal_ids = journal_ids
+
     journal_id = fields.Many2one(
         string="Journal",
         required=True,
@@ -112,6 +145,30 @@ class CommissionCommission(models.Model):
         store=True,
         compute="_compute_amount",
     )
+
+    @api.multi
+    @api.depends(
+        "type_id",
+        "detail_ids.amount_before_tax",
+        "detail_ids.amount_after_tax",
+        "tax_ids.amount_tax",
+    )
+    def _compute_amount(self):
+        for commission in self:
+            amount_before_tax = 0.0
+            amount_tax = 0.0
+            amount_after_tax = 0.0
+
+            for line in commission.detail_ids:
+                amount_before_tax += line.amount_before_tax
+                amount_after_tax += line.amount_after_tax
+
+            for tax in commission.tax_ids:
+                amount_tax += tax.amount_tax
+
+            commission.amount_before_tax = amount_before_tax
+            commission.amount_tax = amount_tax
+            commission.amount_after_tax = amount_after_tax
 
     state = fields.Selection(
         string="State",
@@ -212,6 +269,7 @@ class CommissionCommission(models.Model):
     def action_confirm(self):
         for document in self:
             document.write(document._prepare_confirm_data())
+            document.action_request_approval()
 
     @api.multi
     def _prepare_open_data(self):
@@ -223,6 +281,84 @@ class CommissionCommission(models.Model):
             "open_user_id": self.env.user.id,
             "account_move_id": move.id,
         }
+
+    @api.multi
+    def _create_accounting_entry(self):
+        self.ensure_one()
+        if not self.detail_ids:
+            raise UserError(_("Please create some detail lines."))
+        return self.env["account.move"].create(self._prepare_account_move())
+
+    @api.multi
+    def _prepare_account_move(self):
+        self.ensure_one()
+        return {
+            "name": self.name,
+            "ref": self.name,
+            "journal_id": self.journal_id.id,
+            "date": self.date_commission,
+            "line_ids": self._prepare_move_line(),
+        }
+
+    @api.multi
+    def _prepare_move_line(self):
+        self.ensure_one()
+        result = []
+        result += self._prepare_move_line_payable()
+        result += self._prepare_move_line_detail()
+        result += self._prepare_move_line_tax()
+        return result
+
+    @api.multi
+    def _prepare_move_line_payable(self):
+        # Only 1 data
+        self.ensure_one()
+        return [
+            (
+                0,
+                0,
+                {
+                    "name": self.name,
+                    "account_id": self.payable_account_id.id,
+                    "debit": 0.0,
+                    "credit": self.amount_after_tax,
+                    "amount_currency": self._get_payable_amount_currency(),
+                    "currency_id": self._get_currency(),
+                },
+            )
+        ]
+
+    @api.multi
+    def _get_payable_amount_currency(self):
+        self.ensure_one()
+        return 0.0
+
+    # TODO
+
+    @api.multi
+    def _get_currency(self):
+        self.ensure_one()
+        return False
+
+    # TODO
+
+    @api.multi
+    def _prepare_move_line_detail(self):
+        self.ensure_one()
+        # loop on detail_ids
+        result = []
+        for detail in self.detail_ids:
+            result.append(detail._prepare_move_line_detail())
+        return result
+
+    @api.multi
+    def _prepare_move_line_tax(self):
+        self.ensure_one()
+        # loop on tax_ids
+        result = []
+        for tax in self.tax_ids:
+            result.append(tax._prepare_move_line_tax())
+        return result
 
     @api.multi
     def action_open(self):
@@ -277,17 +413,12 @@ class CommissionCommission(models.Model):
         for document in self:
             document.write(document._prepare_restart_data())
 
-    # @api.multi
-    # def action_print(self):
-    #     for document in self:
-    #         msg = _("Print status for %s: OK!") % document.name
-    #         raise UserError(msg)
-
-    # @api.multi
-    # def action_open_smart_button(self):
-    #     for document in self:
-    #         msg = _("Open Smart Button status for %s: OK!") % document.name
-    #         raise UserError(msg)
+    def action_approve_approval(self):
+        _super = super(CommissionCommission, self)
+        _super.action_approve_approval()
+        for document in self:
+            if document.approved:
+                document.action_open()
 
     @api.multi
     def action_populate_detail(self):
@@ -301,61 +432,37 @@ class CommissionCommission(models.Model):
         for document in self:
             document.policy_template_id = template_id
 
-    @api.multi
-    @api.depends(
-        "type_id",
-        "detail_ids.amount_before_tax",
-        "detail_ids.amount_after_tax",
-        "tax_ids.amount_tax",
-    )
-    def _compute_amount(self):
-        for commission in self:
-            amount_before_tax = 0.0
-            amount_tax = 0.0
-            amount_after_tax = 0.0
-
-            for line in commission.detail_ids:
-                amount_before_tax += line.amount_before_tax
-                amount_after_tax += line.amount_after_tax
-
-            amount_tax = amount_after_tax - amount_before_tax
-            commission.amount_before_tax = amount_before_tax
-            commission.amount_after_tax = amount_after_tax
-            commission.amount_tax = amount_tax
-
-    @api.multi
-    @api.depends(
+    @api.onchange(
         "type_id",
     )
-    def _compute_allowed_journal_ids(self):
-        obj_allowed = self.env["commission.type"]
-        for comm_type in self:
-            journal_ids = self.env["account.journal"].search([]).ids
-            criteria = [
-                ("id", "=", comm_type.type_id.id),
-                # ("allowed_payable_journal_ids", "in", journal_ids),
-            ]
-            journal_ids = obj_allowed.search(criteria).mapped(
-                lambda r: r.allowed_payable_journal_ids
-            )
-            comm_type.allowed_journal_ids = journal_ids
+    def onchange_payable_account(self):
+        self.payable_account_id = False
+        if self.type_id:
+            obj_allowed = self.env["commission.type"]
+            for comm_type in self:
+                criteria = [
+                    ("id", "=", comm_type.type_id.id),
+                ]
+                payable_account = obj_allowed.search(criteria).mapped(
+                    lambda r: r.default_payable_account_id
+                )
+                comm_type.payable_account_id = payable_account
 
-    @api.multi
-    @api.depends(
+    @api.onchange(
         "type_id",
     )
-    def _compute_allowed_payable_account_ids(self):
-        obj_allowed = self.env["commission.type"]
-        for comm_type in self:
-            account_ids = self.env["account.account"].search([]).ids
-            criteria = [
-                ("id", "=", comm_type.type_id.id),
-                # ("allowed_payable_journal_ids", "in", journal_ids),
-            ]
-            account_ids = obj_allowed.search(criteria).mapped(
-                lambda r: r.allowed_payable_account_ids
-            )
-            comm_type.allowed_payable_account_ids = account_ids
+    def onchange_journal(self):
+        self.journal_id = False
+        if self.type_id:
+            obj_allowed = self.env["commission.type"]
+            for comm_type in self:
+                criteria = [
+                    ("id", "=", comm_type.type_id.id),
+                ]
+                journal = obj_allowed.search(criteria).mapped(
+                    lambda r: r.payable_journal_id
+                )
+                comm_type.journal_id = journal
 
     @api.model
     def create(self, values):
@@ -368,3 +475,12 @@ class CommissionCommission(models.Model):
             }
         )
         return result
+
+    @api.multi
+    @api.constrains("date_start", "date_end")
+    def _check_start_end_date(self):
+        if self.date_start:
+            if self.date_end:
+                if self.date_start >= self.date_end:
+                    msg = _("End Date must bigger than Start Date")
+                    raise ValidationError(msg)

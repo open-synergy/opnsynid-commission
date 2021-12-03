@@ -12,14 +12,17 @@ class CommissionCommissionDetail(models.Model):
     @api.multi
     @api.depends("amount_before_tax", "tax_ids")
     def _compute_total(self):
-        total_amount = self.amount_before_tax
-        taxes = False
-        if self.tax_ids:
-            taxes = self.tax_ids.compute_all(total_amount)
-        self.amount_before_tax = taxes["total_excluded"] if taxes else total_amount
-        self.amount_after_tax = (
-            taxes["total_included"] if taxes else self.amount_before_tax
-        )
+        for record in self:
+            total_amount = record.amount_before_tax
+            taxes = False
+            if record.tax_ids:
+                taxes = record.tax_ids.compute_all(total_amount)
+            record.amount_before_tax = (
+                taxes["total_excluded"] if taxes else total_amount
+            )
+            record.amount_after_tax = (
+                taxes["total_included"] if taxes else record.amount_before_tax
+            )
 
     commission_id = fields.Many2one(
         string="# Commission",
@@ -53,3 +56,31 @@ class CommissionCommissionDetail(models.Model):
     amount_after_tax = fields.Float(
         string="Amount After Tax", required=True, compute="_compute_total"
     )
+
+    @api.multi
+    def _prepare_move_line_detail(self):
+        self.ensure_one()
+        return (
+            0,
+            0,
+            {
+                "name": self.account_move_line_id.display_name,
+                "account_id": self.account_id.id,
+                "debit": self.amount_before_tax,
+                "credit": 0.0,
+                "amount_currency": self._get_amount_currency(),
+                "currency_id": self._get_currency(),
+            },
+        )
+
+    @api.multi
+    def _get_amount_currency(self):
+        self.ensure_one()
+        return 0.0
+        # TODO
+
+    @api.multi
+    def _get_currency(self):
+        self.ensure_one()
+        return False
+        # TODO
