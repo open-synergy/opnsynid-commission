@@ -14,6 +14,7 @@
                 <field name="date_end" />
                 <field name="type_id" />
                 <field name="partner_id" />
+                <field name="state" />
             </tree>
         </field>
     </record>
@@ -65,14 +66,6 @@
                         attrs="{'invisible': ['|','|',('need_validation', '!=', True),('rejected','=',True),('state','not in',['confirm'])]}"
                         type="object"
                     />
-                    <!-- <button
-                        name="action_print"
-                        type="object"
-                        string="Print"
-                        class="oe_print"
-                        icon="fa-print"
-                        attrs="{'invisible':[('print_ok','=',False)]}"
-                    /> -->
                     <field
                         name="state"
                         widget="statusbar"
@@ -129,47 +122,21 @@
                             >rejected</b>.</p>
                     </div>
 
-                    <!-- <div class="oe_button_box" name="button_box">
-                        <button
-                                class="oe_stat_button"
-                                name="action_open_smart_button"
-                                string="Smart Button"
-                                type="object"
-                                attrs="{'invisible':[('smart_ok','=',False)]}"
-                                icon="fa-bars"
-                            />
-                    </div> -->
-
-                    <!-- <div name="div_smart_buttons" class="oe_right oe_button_box">
-                    </div>
-                    <div class="oe_left" style="width: 500px;">
-                        <div class="oe_title" style="width: 500px;">
-                            <label for="name" />
-                            <h1>
-                                <field name="name" />
-                            </h1>
-                        </div>
-                    </div> -->
-
                     <group>
                         <group name="left">
                             <field name="type_id" />
-                            <field name="partner_id" />
+                            <field
+                                name="partner_id"
+                                domain="[('is_company','=',False),('parent_id','=',False)]"
+                            />
                         </group>
                         <group name="right">
                             <field name="date_commission" />
                             <field name="date_start" />
                             <field name="date_end" />
-                            <!-- <field name="amount_before_tax" />
-                            <field name="amount_tax" />
-                            <field name="amount_after_tax" /> -->
                         </group>
                     </group>
                     <notebook colspan="4">
-                    <!-- <notebook> -->
-                        <!-- <page name="page_note" string="Note">
-                            <field name="note" nolabel="1" />
-                        </page> -->
                         <page name="page_detail" string="Commission Detail">
                             <field
                                 name="detail_ids"
@@ -270,8 +237,6 @@
                                 <field name="done_ok" />
                                 <field name="cancel_ok" />
                                 <field name="restart_ok" />
-                                <!-- <field name="print_ok" />
-                                <field name="smart_ok" /> -->
                             </group>
                         </page>
                         <page name="log" string="Logs">
@@ -296,7 +261,6 @@
                         widget="mail_followers"
                         groups="base.group_user"
                     />
-                    <!-- <field name="activity_ids" widget="mail_activity"/> -->
                     <field name="message_ids" widget="mail_thread" />
                 </div>
             </form>
@@ -336,7 +300,6 @@
                             widget="many2many_tags"
                             options="{'no_create': True}"
                         />
-                        <!-- <field name="invoice_line_tax_ids" context="{'type': invoice_type}" domain="[('type_tax_use','!=','none'),('company_id', '=', company_id)]" widget="many2many_tags" options="{'no_create': True}"/> -->
                         <field name="amount_after_tax" />
                     </group>
                 </group>
