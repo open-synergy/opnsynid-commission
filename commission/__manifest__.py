@@ -15,10 +15,12 @@
         "ssi_policy_mixin",
         "ssi_multiple_approval_mixin",
         "ssi_sequence_mixin",
-        # "ssi_mixin_state_change_history",
+        "gamification",
     ],
     "data": [
         "security/ir.model.access.csv",
+        "data/policy_template_data.xml",
+        "data/approval_template_data.xml",
         "commission_menu.xml",
         "views/commission_type_views.xml",
         "views/commission_commission_views.xml",

@@ -1,5 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_commission_type_all,access.commission.type – All Users,model_commission_type,,1,1,1,1
+access_commission_type_computation_all,access.commission.type_computation – All Users,model_commission_type_computation,,1,1,1,1
 access_commission_commission_all,access.commission.commission – All Users,model_commission_commission,,1,1,1,1
 access_commission_commission_detail_all,access.commission.commission_detail – All Users,model_commission_commission_detail,,1,1,1,1
 access_commission_commission_tax_all,access.commission.commission_tax – All Users,model_commission_commission_tax,,1,1,1,1

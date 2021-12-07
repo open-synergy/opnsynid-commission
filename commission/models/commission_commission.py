@@ -19,6 +19,33 @@ class CommissionCommission(models.Model):
     _approval_to_state = "open"
     _approval_state = "confirm"
 
+    @api.depends(
+        "type_id",
+        "user_id",
+        "date_start",
+        "date_end",
+    )
+    def _compute_allowed_goal_ids(self):
+        obj_goal = self.env["gamification.goal"]
+        for record in self:
+            result = definition_ids = []
+            if (
+                record.type_id
+                and record.user_id
+                and record.date_start
+                and record.date_end
+            ):
+                for computation in record.type_id.computation_ids:
+                    definition_ids.append(computation.definition_id.id)
+                criteria = [
+                    ("definition_id", "in", definition_ids),
+                    ("user_id", "=", record.user_id.id),
+                    ("start_date", ">=", record.date_start),
+                    ("end_date", "<=", record.date_end),
+                ]
+                result = obj_goal.search(criteria).ids
+            record.allowed_goal_ids = result
+
     name = fields.Char(
         string="# Document",
         default="/",
@@ -51,11 +78,17 @@ class CommissionCommission(models.Model):
         ondelete="restrict",
         comodel_name="commission.type",
     )
-    partner_id = fields.Many2one(
-        string="Partner",
+    user_id = fields.Many2one(
+        string="Agent",
         required=True,
         ondelete="restrict",
-        comodel_name="res.partner",
+        comodel_name="res.users",
+    )
+    allowed_goal_ids = fields.Many2many(
+        string="Allowed Goals",
+        comodel_name="gamification.goal",
+        compute="_compute_allowed_goal_ids",
+        store=False,
     )
     detail_ids = fields.One2many(
         string="Commission Detail",
@@ -210,59 +243,11 @@ class CommissionCommission(models.Model):
         compute="_compute_policy",
     )
 
-    # Log Fields
-    confirm_date = fields.Datetime(
-        string="Confirm Date",
-        readonly=True,
-        copy=False,
-    )
-    confirm_user_id = fields.Many2one(
-        string="Confirmed By",
-        comodel_name="res.users",
-        readonly=True,
-        copy=False,
-    )
-    open_date = fields.Datetime(
-        string="Open Date",
-        readonly=True,
-        copy=False,
-    )
-    open_user_id = fields.Many2one(
-        string="Opened By",
-        comodel_name="res.users",
-        readonly=True,
-        copy=False,
-    )
-    done_date = fields.Datetime(
-        string="Finish Date",
-        readonly=True,
-        copy=False,
-    )
-    done_user_id = fields.Many2one(
-        string="Finished By",
-        comodel_name="res.users",
-        readonly=True,
-        copy=False,
-    )
-    cancel_date = fields.Datetime(
-        string="Cancel Date",
-        readonly=True,
-        copy=False,
-    )
-    cancel_user_id = fields.Many2one(
-        string="Cancelled By",
-        comodel_name="res.users",
-        readonly=True,
-        copy=False,
-    )
-
     @api.multi
     def _prepare_confirm_data(self):
         self.ensure_one()
         return {
             "state": "confirm",
-            "confirm_date": fields.Datetime.now(),
-            "confirm_user_id": self.env.user.id,
         }
 
     @api.multi
@@ -277,8 +262,6 @@ class CommissionCommission(models.Model):
         move = self._create_accounting_entry()
         return {
             "state": "open",
-            "open_date": fields.Datetime.now(),
-            "open_user_id": self.env.user.id,
             "account_move_id": move.id,
         }
 
@@ -370,8 +353,6 @@ class CommissionCommission(models.Model):
         self.ensure_one()
         return {
             "state": "done",
-            "done_date": fields.Datetime.now(),
-            "done_user_id": self.env.user.id,
         }
 
     @api.multi
@@ -384,8 +365,6 @@ class CommissionCommission(models.Model):
         self.ensure_one()
         return {
             "state": "cancel",
-            "cancel_date": fields.Datetime.now(),
-            "cancel_user_id": self.env.user.id,
         }
 
     @api.multi
@@ -398,14 +377,6 @@ class CommissionCommission(models.Model):
         self.ensure_one()
         return {
             "state": "draft",
-            "confirm_date": False,
-            "confirm_user_id": False,
-            "open_date": False,
-            "open_user_id": False,
-            "done_date": False,
-            "done_user_id": False,
-            "cancel_date": False,
-            "cancel_user_id": False,
         }
 
     @api.multi

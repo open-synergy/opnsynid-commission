@@ -26,12 +26,21 @@
                     <field name="name" />
                     <field name="code" />
                     <field name="active" />
-                    <field name="commission_computation_python_code" />
                 </group>
                 <notebook colspan="4">
                     <page name="description" string="Description">
                         <field name="description" />
-
+                    </page>
+                    <page name="computation" string="Computations">
+                        <field name="computation_ids">
+                            <tree editable="top">
+                                <field name="definition_id" />
+                                <field name="account_id" />
+                                <field name="based_on" />
+                                <field name="amount_percentage" />
+                                <field name="amount_fixed" />
+                            </tree>
+                        </field>
                     </page>
                     <page name="accounting" string="Accounting Setting">
                         <group name="accounting_1" colspan="4" col="2">
@@ -52,13 +61,6 @@
                                     domain="[('id', 'in', allowed_payable_journal_ids)]"
                                 />
                           <field name="tax_ids" widget="many2many_tags" />
-                        </group>
-                    </page>
-                    <page name="acc_entry" string="Accounting Entry Evaluation">
-                        <group name="acc_entry" colspan="4" col="2">
-                            <field name="account_move_line_evaluation_method" />
-                            <field name="account_move_line_evaluation_domain" />
-                            <field name="account_move_line_evaluation_python_code" />
                         </group>
                     </page>
                 </notebook>

@@ -7,5 +7,6 @@ from . import (
     commission_commission_detail,
     commission_commission_tax,
     commission_type,
+    commission_type_computation,
     # approval_template,
 )
