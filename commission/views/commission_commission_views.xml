@@ -9,11 +9,22 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
+                <field name="user_id" />
+                <field name="type_id" />
                 <field name="date_commission" />
                 <field name="date_start" />
                 <field name="date_end" />
-                <field name="type_id" />
-                <field name="partner_id" />
+                <field
+                    name="amount_before_tax"
+                    string="Before Tax"
+                    sum="Total Before Tax"
+                />
+                <field name="amount_tax" string="Tax" sum="Total Tax" />
+                <field
+                    name="amount_after_tax"
+                    string="After Tax"
+                    sum="Total After Tax"
+                />
                 <field name="state" />
             </tree>
         </field>
@@ -124,10 +135,12 @@
 
                     <group>
                         <group name="left">
+                          <field name="user_id" />
                             <field name="type_id" />
                             <field
-                                name="partner_id"
-                                domain="[('is_company','=',False),('parent_id','=',False)]"
+                                name="allowed_goal_ids"
+                                widget="many2many_tags"
+                                invisible="1"
                             />
                         </group>
                         <group name="right">
@@ -146,15 +159,30 @@
                                 context="{'default_commission_id': id}"
                             >
                                 <tree string="Commission Detail" editable="bottom">
-                                    <field name="account_move_line_id" />
+                                    <field
+                                        name="goal_id"
+                                        domain="[('id','in',parent.allowed_goal_ids)]"
+                                    />
+                                    <field name="computation_id" invisible="1" />
+                                    <field name="date_start" />
+                                    <field name="date_end" />
                                     <field name="account_id" />
-                                    <field name="amount_before_tax" />
+                                    <field name="amount_base" string="Base" />
+                                    <field
+                                        name="amount_percentage"
+                                        string="Percentage"
+                                    />
+                                    <field name="amount_fixed" string="Fixed" />
+                                    <field
+                                        name="amount_before_tax"
+                                        string="Before Tax"
+                                    />
                                     <field
                                         name="tax_ids"
                                         widget="many2many_tags"
                                         options="{'no_create': True}"
                                     />
-                                    <field name="amount_after_tax" />
+                                    <field name="amount_after_tax" string="After Tax" />
                                 </tree>
                             </field>
                             <group class="oe_subtotal_footer oe_right">
@@ -240,18 +268,6 @@
                             </group>
                         </page>
                         <page name="log" string="Logs">
-                            <group name="group_5" colspan="4" col="3">
-                                <group name="group_log_1" colspan="4" col="3">
-                                    <field name="confirm_date" string="Confirmation" />
-                                    <field name="confirm_user_id" nolabel="1" />
-                                    <field name="open_date" string="Open" />
-                                    <field name="open_user_id" nolabel="1" />
-                                    <field name="done_date" string="Finish" />
-                                    <field name="done_user_id" nolabel="1" />
-                                    <field name="cancel_date" string="Cancellation" />
-                                    <field name="cancel_user_id" nolabel="1" />
-                                </group>
-                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -266,47 +282,6 @@
             </form>
         </field>
     </record>
-
-    <record id="view_commission_detail_tree" model="ir.ui.view">
-        <field name="name">commission.commission_detail.tree</field>
-        <field name="model">commission.commission_detail</field>
-        <field name="arch" type="xml">
-            <tree string="Commission Detail">
-                <field name="account_move_line_id" />
-                <field name="account_id" />
-                <field name="amount_before_tax" />
-                <field
-                    name="tax_ids"
-                    widget="many2many_tags"
-                    options="{'no_create': True}"
-                />
-                <field name="amount_after_tax" />
-            </tree>
-        </field>
-    </record>
-
-    <record id="view_commission_detail_form" model="ir.ui.view">
-        <field name="name">commission.commission_detail.form</field>
-        <field name="model">commission.commission_detail</field>
-        <field name="arch" type="xml">
-            <form string="Commission Detail">
-                <group>
-                    <group>
-                        <field name="account_move_line_id" />
-                        <field name="account_id" />
-                        <field name="amount_before_tax" />
-                        <field
-                            name="tax_ids"
-                            widget="many2many_tags"
-                            options="{'no_create': True}"
-                        />
-                        <field name="amount_after_tax" />
-                    </group>
-                </group>
-            </form>
-        </field>
-    </record>
-
 
     <record id="commission_commission_action" model="ir.actions.act_window">
         <field name="name">Commission</field>

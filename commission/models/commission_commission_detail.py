@@ -10,10 +10,17 @@ class CommissionCommissionDetail(models.Model):
     _description = "Commission Detail"
 
     @api.multi
-    @api.depends("amount_before_tax", "tax_ids")
+    @api.depends(
+        "amount_base",
+        "amount_percentage",
+        "amount_fixed",
+        "tax_ids",
+    )
     def _compute_total(self):
         for record in self:
-            total_amount = record.amount_before_tax
+            total_amount = (
+                record.amount_base * record.amount_percentage
+            ) + record.amount_fixed
             taxes = False
             if record.tax_ids:
                 taxes = record.tax_ids.compute_all(total_amount)
@@ -24,17 +31,49 @@ class CommissionCommissionDetail(models.Model):
                 taxes["total_included"] if taxes else record.amount_before_tax
             )
 
+    @api.depends(
+        "goal_id",
+    )
+    def _compute_computation_id(self):
+        for record in self:
+            result = False
+            obj_computation = self.env["commission.type_computation"]
+            if record.goal_id:
+                criteria = [
+                    ("definition_id", "=", record.goal_id.definition_id.id),
+                    ("type_id", "=", self.commission_id.type_id.id),
+                ]
+                computations = obj_computation.search(criteria)
+                if len(computations) > 0:
+                    result = computations[0].id
+            record.computation_id = result
+
     commission_id = fields.Many2one(
         string="# Commission",
         comodel_name="commission.commission",
         required=True,
         ondelete="cascade",
     )
-    account_move_line_id = fields.Many2one(
-        string="Account Move Line",
-        comodel_name="account.move.line",
-        required=True,
+    computation_id = fields.Many2one(
+        string="Computation",
+        comodel_name="commission.type_computation",
+        compute="_compute_computation_id",
+        store=True,
+    )
+    goal_id = fields.Many2one(
+        string="Gamification Goal",
+        comodel_name="gamification.goal",
         ondelete="restrict",
+    )
+    date_start = fields.Date(
+        string="Date Start",
+        related="goal_id.start_date",
+        store=True,
+    )
+    date_end = fields.Date(
+        string="Date End",
+        related="goal_id.end_date",
+        store=True,
     )
     account_id = fields.Many2one(
         string="Account",
@@ -49,12 +88,30 @@ class CommissionCommissionDetail(models.Model):
         column1="line_id",
         column2="tax_id",
     )
+    amount_base = fields.Float(
+        string="Base Computation",
+        required=True,
+        default=0.0,
+    )
+    amount_percentage = fields.Float(
+        string="Percentage",
+        required=True,
+        default=1.0,
+    )
+    amount_fixed = fields.Float(
+        string="Fixed Amount",
+        required=True,
+        default=0.0,
+    )
     amount_before_tax = fields.Float(
         string="Amount Before Tax",
-        required=True,
+        compute="_compute_total",
+        store=True,
     )
     amount_after_tax = fields.Float(
-        string="Amount After Tax", required=True, compute="_compute_total"
+        string="Amount After Tax",
+        compute="_compute_total",
+        store=True,
     )
 
     @api.multi
@@ -84,3 +141,50 @@ class CommissionCommissionDetail(models.Model):
         self.ensure_one()
         return False
         # TODO
+
+    @api.onchange(
+        "goal_id",
+        "computation_id",
+    )
+    def onchange_amount_base(self):
+        result = 0.0
+        if self.goal_id and self.computation_id:
+            computation = self.computation_id
+            if computation.based_on == "current":
+                result = self.goal_id.current
+            elif computation.based_on == "target":
+                result = self.goal_id.target_goal
+        self.amount_base = result
+
+    @api.onchange(
+        "goal_id",
+        "computation_id",
+    )
+    def onchange_amount_percentage(self):
+        result = 0.0
+        if self.goal_id and self.computation_id:
+            computation = self.computation_id
+            result = computation.amount_percentage
+        self.amount_percentage = result
+
+    @api.onchange(
+        "goal_id",
+        "computation_id",
+    )
+    def onchange_amount_fixed(self):
+        result = 0.0
+        if self.goal_id and self.computation_id:
+            computation = self.computation_id
+            result = computation.amount_fixed
+        self.amount_fixed = result
+
+    @api.onchange(
+        "goal_id",
+        "computation_id",
+    )
+    def onchange_account_id(self):
+        result = 0.0
+        if self.goal_id and self.computation_id:
+            computation = self.computation_id
+            result = computation.account_id
+        self.account_id = result

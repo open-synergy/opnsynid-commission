@@ -45,27 +45,24 @@ class CommissionType(models.Model):
         column1="type_id",
         column2="journal_id",
     )
-    account_move_line_evaluation_method = fields.Selection(
-        string="Evaluation Method",
-        selection=[
-            ("domain", "Domain"),
-            ("python", "python"),
-        ],
-        default="domain",
-    )
-    account_move_line_evaluation_domain = fields.Text(
-        string="Evaluation Domain",
-    )
-    account_move_line_evaluation_python_code = fields.Text(
-        string="Evaluation Python Code",
-    )
-    commission_computation_python_code = fields.Text(
-        string="Commission Computation Python Code",
-    )
     tax_ids = fields.Many2many(
         string="Tax",
         comodel_name="account.tax",
         relation="rel_commission_type_2_tax",
         column1="type_id",
         column2="tax_id",
+    )
+    computation_ids = fields.One2many(
+        string="Computations",
+        comodel_name="commission.type_computation",
+        inverse_name="type_id",
+    )
+    based_on = fields.Selection(
+        string="Commission Computation Based On",
+        selection=[
+            ("current", "Current Value"),
+            ("target", "Target Value"),
+        ],
+        required=True,
+        default="current",
     )
