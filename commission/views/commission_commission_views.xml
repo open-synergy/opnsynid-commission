@@ -256,9 +256,20 @@
                             groups="base.group_system"
                         >
                             <group name="policy_1" colspan="4" col="2">
+
+                                <field
+                                    name="allowed_policy_template_ids"
+                                    widget="many2many_tags"
+                                    invisible="1"
+                                />
                                 <field
                                     name="policy_template_id"
-                                    groups="base.group_system"
+                                    domain="[('id','in',allowed_policy_template_ids)]"
+                                />
+                                <button
+                                    name="action_reload_policy_template"
+                                    type="object"
+                                    string="Reload Template Policy"
                                 />
                                 <field name="confirm_ok" />
                                 <field name="open_ok" />
