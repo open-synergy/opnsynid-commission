@@ -27,6 +27,13 @@ class CommissionTypeComputation(models.Model):
             ("user_type_id.type", "=", "other"),
         ],
     )
+    tax_ids = fields.Many2many(
+        string="Default Tax(es)",
+        comodel_name="account.tax",
+        relation="rel_commission_type_computation_2_tax",
+        column1="computation_id",
+        column2="tax_id",
+    )
     based_on = fields.Selection(
         string="Commission Computation Based On",
         selection=[

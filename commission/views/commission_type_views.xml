@@ -36,6 +36,11 @@
                             <tree editable="top">
                                 <field name="definition_id" />
                                 <field name="account_id" />
+                                <field
+                                        name="tax_ids"
+                                        widget="many2many_tags"
+                                        domain="[('id','in',parent.allowed_tax_ids)]"
+                                    />
                                 <field name="based_on" />
                                 <field name="amount_percentage" />
                                 <field name="amount_fixed" />
@@ -60,7 +65,7 @@
                                     name="payable_journal_id"
                                     domain="[('id', 'in', allowed_payable_journal_ids)]"
                                 />
-                          <field name="tax_ids" widget="many2many_tags" />
+                          <field name="allowed_tax_ids" widget="many2many_tags" />
                         </group>
                     </page>
                 </notebook>
