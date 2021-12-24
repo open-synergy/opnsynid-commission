@@ -39,14 +39,14 @@ class CommissionType(models.Model):
         comodel_name="account.journal",
     )
     allowed_payable_journal_ids = fields.Many2many(
-        string="Allowed Payable Journal",
+        string="Allowed Payable Journal(s)",
         comodel_name="account.journal",
         relation="rel_commission_type_2_journal",
         column1="type_id",
         column2="journal_id",
     )
-    tax_ids = fields.Many2many(
-        string="Tax",
+    allowed_tax_ids = fields.Many2many(
+        string="Allowed Tax(es)",
         comodel_name="account.tax",
         relation="rel_commission_type_2_tax",
         column1="type_id",

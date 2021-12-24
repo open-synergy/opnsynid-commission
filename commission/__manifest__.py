@@ -4,7 +4,7 @@
 
 {
     "name": "Commission",
-    "version": "11.0.1.2.0",
+    "version": "11.0.1.3.0",
     "license": "LGPL-3",
     "category": "Commission",
     "website": "https://simetri-sinergi.id",
@@ -16,6 +16,7 @@
         "ssi_multiple_approval_mixin",
         "ssi_sequence_mixin",
         "gamification",
+        "partner_contact_in_several_companies",
     ],
     "data": [
         "security/ir.model.access.csv",
