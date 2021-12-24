@@ -22,17 +22,6 @@
     <field name="restrict_user" eval="0" />
     <field name="restrict_additional" eval="0" />
 </record>
-<record id="policy_template_detail2" model="policy.template_detail">
-    <field name="template_id" ref="policy_template" />
-    <field
-                name="field_id"
-                search="[('model_id.model','=','commission.commission'),('name','=','done_ok')]"
-            />
-    <field name="restrict_state" eval="1" />
-    <field name="states">open</field>
-    <field name="restrict_user" eval="0" />
-    <field name="restrict_additional" eval="0" />
-</record>
 <record id="policy_template_detail3" model="policy.template_detail">
     <field name="template_id" ref="policy_template" />
     <field
@@ -40,7 +29,7 @@
                 search="[('model_id.model','=','commission.commission'),('name','=','cancel_ok')]"
             />
     <field name="restrict_state" eval="1" />
-    <field name="states">draft,confirm,open,done</field>
+    <field name="states">draft,confirm,open</field>
     <field name="restrict_user" eval="0" />
     <field name="restrict_additional" eval="0" />
 </record>

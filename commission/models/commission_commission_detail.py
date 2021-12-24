@@ -41,7 +41,7 @@ class CommissionCommissionDetail(models.Model):
             if record.goal_id:
                 criteria = [
                     ("definition_id", "=", record.goal_id.definition_id.id),
-                    ("type_id", "=", self.commission_id.type_id.id),
+                    ("type_id", "=", record.commission_id.type_id.id),
                 ]
                 computations = obj_computation.search(criteria)
                 if len(computations) > 0:
@@ -81,6 +81,11 @@ class CommissionCommissionDetail(models.Model):
         required=True,
         ondelete="restrict",
     )
+    analytic_account_id = fields.Many2one(
+        string="Analytic Account",
+        comodel_name="account.analytic.account",
+        ondelete="restrict",
+    )
     tax_ids = fields.Many2many(
         string="Tax",
         comodel_name="account.tax",
@@ -117,18 +122,25 @@ class CommissionCommissionDetail(models.Model):
     @api.multi
     def _prepare_move_line_detail(self):
         self.ensure_one()
+        analytic = self._get_analytic_account()
         return (
             0,
             0,
             {
-                "name": self.account_move_line_id.display_name,
+                "name": "TODO",
                 "account_id": self.account_id.id,
                 "debit": self.amount_before_tax,
                 "credit": 0.0,
                 "amount_currency": self._get_amount_currency(),
                 "currency_id": self._get_currency(),
+                "analytic_account_id": analytic and analytic.id or False,
             },
         )
+
+    @api.multi
+    def _get_analytic_account(self):
+        self.ensure_one()
+        return self.analytic_account_id or False
 
     @api.multi
     def _get_amount_currency(self):
