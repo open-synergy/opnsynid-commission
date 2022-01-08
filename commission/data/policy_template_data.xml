@@ -44,5 +44,15 @@
     <field name="restrict_user" eval="0" />
     <field name="restrict_additional" eval="0" />
 </record>
+<record id="policy_template_detail5" model="policy.template_detail">
+    <field name="template_id" ref="policy_template" />
+    <field
+                name="field_id"
+                search="[('model_id.model','=','commission.commission'),('name','=','manual_number_ok')]"
+            />
+    <field name="restrict_state" eval="0" />
+    <field name="restrict_user" eval="0" />
+    <field name="restrict_additional" eval="0" />
+</record>
 </data>
 </odoo>

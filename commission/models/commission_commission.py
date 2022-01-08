@@ -234,7 +234,7 @@ class CommissionCommission(models.Model):
         string="Commission Detail",
         comodel_name="commission.commission_detail",
         inverse_name="commission_id",
-        copy=True,
+        copy=False,
         readonly=True,
         states={"draft": [("readonly", False)]},
     )
@@ -242,7 +242,7 @@ class CommissionCommission(models.Model):
         string="Tax",
         comodel_name="commission.commission_tax",
         inverse_name="commission_id",
-        copy=True,
+        copy=False,
         readonly=True,
         states={"draft": [("readonly", False)]},
     )
@@ -365,6 +365,10 @@ class CommissionCommission(models.Model):
         string="Can Restart",
         compute="_compute_policy",
     )
+    manual_number_ok = fields.Boolean(
+        string="Can Input Manual Document Number",
+        compute="_compute_policy",
+    )
 
     @api.multi
     def _write(self, vals):
@@ -403,9 +407,11 @@ class CommissionCommission(models.Model):
     def _prepare_open_data(self):
         self.ensure_one()
         move = self._create_accounting_entry()
+        sequence = self._create_sequence()
         return {
             "state": "open",
             "account_move_id": move.id,
+            "name": sequence,
         }
 
     @api.multi
@@ -535,9 +541,20 @@ class CommissionCommission(models.Model):
         }
 
     @api.multi
+    def _delete_accounting_entry(self):
+        self.ensure_one()
+        if not self.account_move_id:
+            return True
+
+        move = self.account_move_id
+        self.write({"account_move_id": False})
+        move.unlink()
+
+    @api.multi
     def action_cancel(self):
         for document in self:
             document.write(document._prepare_cancel_data())
+            document._delete_accounting_entry()
 
     @api.multi
     def _prepare_restart_data(self):
@@ -679,18 +696,6 @@ class CommissionCommission(models.Model):
         }
         return vals
 
-    @api.model
-    def create(self, values):
-        _super = super(CommissionCommission, self)
-        result = _super.create(values)
-        sequence = result._create_sequence()
-        result.write(
-            {
-                "name": sequence,
-            }
-        )
-        return result
-
     @api.multi
     @api.constrains("date_start", "date_end")
     def _check_start_end_date(self):
@@ -700,3 +705,30 @@ class CommissionCommission(models.Model):
                     if record.date_start >= record.date_end:
                         msg = _("End Date must bigger than Start Date")
                         raise ValidationError(msg)
+
+    @api.multi
+    def name_get(self):
+        result = []
+        for record in self:
+            if record.name == "/":
+                name = "*" + str(record.id)
+            else:
+                name = record.name
+            result.append((record.id, name))
+        return result
+
+    @api.constrains(
+        "name",
+    )
+    def _check_duplicate_name(self):
+        error_msg = _("No duplicate document name allowed")
+        obj_commission = self.env["commission.commission"]
+        for document in self:
+            criteria = [
+                ("id", "!=", document.id),
+                ("name", "=", document.name),
+                ("name", "!=", "/"),
+            ]
+            count_search = obj_commission.search_count(criteria)
+            if count_search > 0:
+                raise ValidationError(error_msg)
