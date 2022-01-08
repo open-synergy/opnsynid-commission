@@ -65,6 +65,12 @@ class CommissionCommissionDetail(models.Model):
         comodel_name="gamification.goal",
         ondelete="restrict",
     )
+    challenge_id = fields.Many2one(
+        string="Challange",
+        comodel_name="gamification.challenge",
+        related="goal_id.challenge_id",
+        store=True,
+    )
     date_start = fields.Date(
         string="Date Start",
         related="goal_id.start_date",
