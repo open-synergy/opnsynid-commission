@@ -406,8 +406,8 @@ class CommissionCommission(models.Model):
     @api.multi
     def _prepare_open_data(self):
         self.ensure_one()
-        move = self._create_accounting_entry()
         sequence = self._create_sequence()
+        move = self._create_accounting_entry(sequence)
         return {
             "state": "open",
             "account_move_id": move.id,
@@ -422,29 +422,29 @@ class CommissionCommission(models.Model):
         }
 
     @api.multi
-    def _create_accounting_entry(self):
+    def _create_accounting_entry(self, sequence):
         self.ensure_one()
         if not self.detail_ids:
             raise UserError(_("Please create some detail lines."))
-        return self.env["account.move"].create(self._prepare_account_move())
+        return self.env["account.move"].create(self._prepare_account_move(sequence))
 
     @api.multi
-    def _prepare_account_move(self):
+    def _prepare_account_move(self, sequence):
         self.ensure_one()
         return {
-            "name": self.name,
+            "name": sequence,
             "ref": self.name,
             "journal_id": self.journal_id.id,
             "date": self.date_commission,
-            "line_ids": self._prepare_move_line(),
+            "line_ids": self._prepare_move_line(sequence),
         }
 
     @api.multi
-    def _prepare_move_line(self):
+    def _prepare_move_line(self, sequence):
         self.ensure_one()
         result = []
-        result += self._prepare_move_line_payable()
-        result += self._prepare_move_line_detail()
+        result += self._prepare_move_line_payable(sequence)
+        result += self._prepare_move_line_detail(sequence)
         result += self._prepare_move_line_tax()
         return result
 
@@ -457,14 +457,20 @@ class CommissionCommission(models.Model):
         return result
 
     @api.multi
-    def _prepare_move_line_payable(self):
+    def _prepare_move_line_payable(self, sequence):
         self.ensure_one()
+        name = _("Commission %s - %s - Period %s to %s") % (
+            sequence,
+            self.user_id.name,
+            self.date_start,
+            self.date_end,
+        )
         return [
             (
                 0,
                 0,
                 {
-                    "name": self.name,
+                    "name": name,
                     "account_id": self.payable_account_id.id,
                     "partner_id": self._get_partner().id,
                     "debit": 0.0,
@@ -499,12 +505,12 @@ class CommissionCommission(models.Model):
     # TODO
 
     @api.multi
-    def _prepare_move_line_detail(self):
+    def _prepare_move_line_detail(self, sequence):
         self.ensure_one()
         # loop on detail_ids
         result = []
         for detail in self.detail_ids:
-            result.append(detail._prepare_move_line_detail())
+            result.append(detail._prepare_move_line_detail(sequence))
         return result
 
     @api.multi

@@ -2,7 +2,9 @@
 # Copyright 2021 PT. Simetri Sinergi Indonesia
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+
+from odoo.addons import decimal_precision as dp
 
 
 class CommissionCommissionDetail(models.Model):
@@ -71,6 +73,12 @@ class CommissionCommissionDetail(models.Model):
         related="goal_id.challenge_id",
         store=True,
     )
+    definition_id = fields.Many2one(
+        string="Definition",
+        comodel_name="gamification.goal.definition",
+        related="goal_id.definition_id",
+        store=True,
+    )
     date_start = fields.Date(
         string="Date Start",
         related="goal_id.start_date",
@@ -108,6 +116,7 @@ class CommissionCommissionDetail(models.Model):
         string="Percentage",
         required=True,
         default=1.0,
+        digits=dp.get_precision("Commission Percentage"),
     )
     amount_fixed = fields.Float(
         string="Fixed Amount",
@@ -126,14 +135,22 @@ class CommissionCommissionDetail(models.Model):
     )
 
     @api.multi
-    def _prepare_move_line_detail(self):
+    def _prepare_move_line_detail(self, sequence):
         self.ensure_one()
         analytic = self._get_analytic_account()
+        commission = self.commission_id
+        name = _("Commission detail %s - %s - %s - Period %s to %s") % (
+            sequence,
+            commission.user_id.name,
+            self.definition_id.name,
+            commission.date_start,
+            commission.date_end,
+        )
         return (
             0,
             0,
             {
-                "name": "TODO",
+                "name": name,
                 "account_id": self.account_id.id,
                 "debit": self.amount_before_tax,
                 "credit": 0.0,

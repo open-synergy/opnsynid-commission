@@ -108,7 +108,7 @@
                               <field
                                     name="name"
                                     class="oe_edit_only"
-                                    attrs="{'readonly':['|',('state','!=','draft'),'&amp;',('state','=','draft'),('manual_number_ok','=',False)]}"
+                                    attrs="{'readonly':[('manual_number_ok','=',False)]}"
                                 />
                               <field name="display_name" class="oe_read_only" />
                           </h1>
@@ -153,6 +153,7 @@
                                     />
                                     <field name="challenge_id" readonly="1" />
                                     <field name="computation_id" invisible="1" />
+                                    <field name="definition_id" />
                                     <field name="date_start" />
                                     <field name="date_end" />
                                     <field name="account_id" />
