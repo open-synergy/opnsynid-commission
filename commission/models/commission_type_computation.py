@@ -4,6 +4,8 @@
 
 from odoo import fields, models
 
+from odoo.addons import decimal_precision as dp
+
 
 class CommissionTypeComputation(models.Model):
     _name = "commission.type_computation"
@@ -47,6 +49,7 @@ class CommissionTypeComputation(models.Model):
         string="Percentage",
         required=True,
         default=1.0,
+        digits=dp.get_precision("Commission Percentage"),
     )
     amount_fixed = fields.Float(
         string="Fixed Amount",
