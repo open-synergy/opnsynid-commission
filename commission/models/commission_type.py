@@ -66,3 +66,10 @@ class CommissionType(models.Model):
         required=True,
         default="current",
     )
+    user_ids = fields.Many2many(
+        string="Agents",
+        comodel_name="res.users",
+        relation="rel_commission_type_2_user",
+        column1="type_id",
+        column2="user_id",
+    )

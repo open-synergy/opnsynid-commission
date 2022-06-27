@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+<record id="commission_generate_commission_form" model="ir.ui.view">
+    <field name="name">commission.generate_commission form</field>
+    <field name="model">commission.generate_commission</field>
+    <field name="arch" type="xml">
+        <form>
+            <group name="header1" colspan="4" col="2">
+                <field name="type_id" />
+                <field name="date_start" />
+                <field name="date_end" />
+            </group>
+            <group name="header2" colspan="4" col="2">
+                <field name="user_ids" nolabel="1" colspan="2" />
+            </group>
+            <footer>
+                <button
+                        name="action_confirm"
+                        string="Confirm"
+                        type="object"
+                        class="btn-primary"
+                    />
+                or
+                <button string="Cancel" class="btn-default" special="cancel" />
+            </footer>
+        </form>
+    </field>
+</record>
+
+<record id="commission_generate_commission_action" model="ir.actions.act_window">
+    <field name="name">Generate Commission</field>
+    <field name="res_model">commission.generate_commission</field>
+    <field name="view_type">form</field>
+    <field name="view_mode">form</field>
+    <field name="view_id" ref="commission_generate_commission_form" />
+    <field name="target">new</field>
+</record>
+
+</odoo>
