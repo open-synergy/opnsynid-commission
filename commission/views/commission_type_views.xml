@@ -20,6 +20,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button
+                        name="%(commission_generate_commission_action)d"
+                        string="Generate Commission"
+                        type="action"
+                    />
                 </header>
                 <sheet>
                 <group name="header" colspan="4" col="2">
@@ -46,6 +51,9 @@
                                 <field name="amount_fixed" />
                             </tree>
                         </field>
+                    </page>
+                    <page name="user" string="Users">
+                        <field name="user_ids" />
                     </page>
                     <page name="accounting" string="Accounting Setting">
                         <group name="accounting_1" colspan="4" col="2">

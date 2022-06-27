@@ -4,7 +4,7 @@
 
 {
     "name": "Commission",
-    "version": "11.0.1.5.0",
+    "version": "11.0.1.6.0",
     "license": "LGPL-3",
     "category": "Commission",
     "website": "https://simetri-sinergi.id",
@@ -26,6 +26,7 @@
         "data/sequence_template_data.xml",
         "data/decimal_precission_data.xml",
         "commission_menu.xml",
+        "wizards/generate_commission.xml",
         "views/commission_type_views.xml",
         "views/commission_commission_views.xml",
     ],
