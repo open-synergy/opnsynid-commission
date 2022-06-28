@@ -4,7 +4,7 @@
 
 {
     "name": "Commission",
-    "version": "11.0.1.6.0",
+    "version": "11.0.1.6.1",
     "license": "LGPL-3",
     "category": "Commission",
     "website": "https://simetri-sinergi.id",

@@ -606,6 +606,7 @@ class CommissionCommission(models.Model):
         result = []
         obj_detail = self.env["commission.commission_detail"]
         for goal in self.allowed_goal_ids:
+            goal.update_goal()
             detail_cache = obj_detail.new(
                 {
                     "commission_id": self.id,
